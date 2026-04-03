@@ -1,0 +1,36 @@
+#appFrequencia {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 220px;
+    background: #1e1e2f;
+    color: #fff;
+    border-radius: 12px;
+    padding: 15px;
+    z-index: 999999;
+    font-family: Arial;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+#appFrequencia h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+#appFrequencia button {
+    width: 100%;
+    margin-top: 5px;
+    padding: 8px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-presente { background: #28a745; color: #fff; }
+.btn-falta { background: #dc3545; color: #fff; }
+
+#contador {
+    margin-top: 10px;
+    font-size: 14px;
+}

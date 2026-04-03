@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "SIGEduc PRO",
+  "version": "2.0",
+  "description": "Controle rápido de frequência",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/sigeduc/diario_classe/frequencia_aluno/*"
+      ],
+      "js": ["content.js"],
+      "css": ["style.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
