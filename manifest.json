@@ -18,7 +18,8 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*/sigeduc/diario_classe/frequencia_aluno/*"
+        "*://*/sigeduc/diario_classe/frequencia_aluno/*",
+        "*://*/sigeduc/portais/docente/*"
       ],
       "js": ["content.js"],
       "css": ["style.css"],

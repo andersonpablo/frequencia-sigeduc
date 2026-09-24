@@ -1,3 +1,6 @@
+/* ==========================================
+   PAINEL FLUTUANTE DE FREQUÊNCIA
+   ========================================== */
 #appFrequencia {
     position: fixed;
     top: 20px;
@@ -8,8 +11,8 @@
     border-radius: 12px;
     padding: 15px;
     z-index: 999999;
-    font-family: Arial;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    font-family: Arial, sans-serif;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
 }
 
 #appFrequencia h3 {
@@ -25,12 +28,180 @@
     border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
+    transition: opacity 0.2s ease;
 }
 
-.btn-presente { background: #28a745; color: #fff; }
-.btn-falta { background: #dc3545; color: #fff; }
+#appFrequencia button:hover {
+    opacity: 0.85;
+}
+
+.btn-presente {
+    background: #28a745;
+    color: #fff;
+}
+
+.btn-falta {
+    background: #dc3545;
+    color: #fff;
+}
 
 #contador {
     margin-top: 10px;
-    font-size: 14px;
+    font-size: 15px;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* ==========================================
+   BARRA DE FILTRO DE SEMESTRE
+   ========================================== */
+.painel-filtro-semestres {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0 8px 0;
+    padding: 10px 14px;
+    background: #f0f4ff;
+    border: 1px solid #c8d8f8;
+    border-radius: 8px;
+}
+
+.filtro-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a3a6b;
+    margin-right: 4px;
+    white-space: nowrap;
+}
+
+.btn-semestre-filtro {
+    background: #ffffff;
+    border: 1px solid #b0c4e8;
+    color: #2c4a7a;
+    padding: 5px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+
+.btn-semestre-filtro:hover {
+    background: #dce8ff;
+    border-color: #4a7fcb;
+}
+
+.btn-semestre-filtro.ativo {
+    background: #0b5ed7;
+    border-color: #0b5ed7;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(11, 94, 215, 0.3);
+}
+
+/* ==========================================
+   TABELA DE TURMAS — CÉLULAS CUSTOMIZADAS
+   ========================================== */
+
+/* Cabeçalhos customizados */
+.th-custom {
+    background-color: #1a3a6b !important;
+    color: #ffffff !important;
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    border: none !important;
+}
+
+.th-turma    { width: 80px  !important; text-align: center !important; }
+.th-periodo  { width: 90px  !important; text-align: center !important; }
+.th-componente { min-width: 180px !important; }
+.th-acoes    { width: 160px !important; text-align: center !important; }
+
+/* Célula da turma */
+.td-turma-custom {
+    text-align: center !important;
+    padding: 8px 6px !important;
+    vertical-align: middle !important;
+}
+
+/* Badge da turma (ex: 1A, 2B) */
+.turma-tag-custom {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: #0b5ed7 !important;
+    color: #ffffff !important;
+    padding: 5px 11px !important;
+    border-radius: 6px !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    text-decoration: none !important;
+    letter-spacing: 0.5px !important;
+    box-shadow: 0 2px 5px rgba(11, 94, 215, 0.25) !important;
+    gap: 5px !important;
+    transition: background-color 0.15s ease !important;
+}
+
+.turma-tag-custom:hover {
+    background-color: #0a4fbf !important;
+    text-decoration: none !important;
+}
+
+.turma-tag-custom img {
+    width: 20px !important;
+    height: 20px !important;
+    vertical-align: middle !important;
+}
+
+/* Célula do período */
+.td-periodo-custom {
+    text-align: center !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #2c4a7a !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    padding: 8px 10px !important;
+}
+
+/* Célula do componente/disciplina */
+.coluna-disciplina-custom {
+    font-weight: 600 !important;
+    color: #1a3a6b !important;
+    font-size: 13px !important;
+    text-align: left !important;
+    vertical-align: middle !important;
+    padding: 8px 12px !important;
+    min-width: 160px !important;
+}
+
+/* Célula das ações */
+.td-acoes-custom {
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 6px 8px !important;
+    white-space: nowrap !important;
+}
+
+/* Ícones das ações — maiores e com hover */
+.td-acoes-custom a img,
+#main-docente table.listagem td.td-acoes-custom a img,
+table.listagem td.td-acoes-custom a img,
+table.subFormulario td.td-acoes-custom a img {
+    width: 38px !important;
+    height: 38px !important;
+    margin: 0 4px !important;
+    vertical-align: middle !important;
+    border-radius: 6px !important;
+    transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.td-acoes-custom a:hover img {
+    transform: scale(1.2) !important;
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25)) !important;
 }
