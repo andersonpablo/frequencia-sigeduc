@@ -1,59 +1,4 @@
 /* ==========================================
-   PAINEL FLUTUANTE DE FREQUÊNCIA
-   ========================================== */
-#appFrequencia {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 220px;
-    background: #1e1e2f;
-    color: #fff;
-    border-radius: 12px;
-    padding: 15px;
-    z-index: 999999;
-    font-family: Arial, sans-serif;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-}
-
-#appFrequencia h3 {
-    margin: 0 0 10px;
-    font-size: 16px;
-}
-
-#appFrequencia button {
-    width: 100%;
-    margin-top: 5px;
-    padding: 8px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: opacity 0.2s ease;
-}
-
-#appFrequencia button:hover {
-    opacity: 0.85;
-}
-
-.btn-presente {
-    background: #28a745;
-    color: #fff;
-}
-
-.btn-falta {
-    background: #dc3545;
-    color: #fff;
-}
-
-#contador {
-    margin-top: 10px;
-    font-size: 15px;
-    text-align: center;
-    font-weight: bold;
-    letter-spacing: 1px;
-}
-
-/* ==========================================
    BARRA DE FILTRO DE SEMESTRE
    ========================================== */
 .painel-filtro-semestres {
@@ -204,4 +149,261 @@ table.subFormulario td.td-acoes-custom a img {
 .td-acoes-custom a:hover img {
     transform: scale(1.2) !important;
     filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25)) !important;
+}
+
+
+/* ==========================================
+   LANÇAMENTO DE FREQUÊNCIA — NOVA INTERFACE
+   ========================================== */
+body.sp-freq-ativo #conteudo {
+    background: #f3f6fc !important;
+    padding: 16px 20px !important;
+}
+
+/* Esconde o que a nova interface substitui (continua no DOM) */
+body.sp-freq-ativo #conteudo > h2,
+body.sp-freq-ativo .descricaoOperacao,
+body.sp-freq-ativo table.dados_turma_pg,
+body.sp-freq-ativo #frequencia > div:first-child,
+body.sp-freq-ativo #frequencia > h4,
+body.sp-freq-ativo #frequencia > br,
+body.sp-freq-ativo table#formFrequencia\:alunos {
+    display: none !important;
+}
+
+/* Calendário só aparece em "Alterar dia" */
+body.sp-freq-ativo:not(.sp-modo-calendario) #calendarios { display: none !important; }
+body.sp-modo-calendario #calendarios {
+    display: block !important;
+    float: none !important;
+    width: auto !important;
+    background: #fff;
+    border: 1px solid #dfe5f0;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+body.sp-modo-calendario #spGrid,
+body.sp-modo-calendario .sp-linha-resumo,
+body.sp-modo-calendario #formFrequencia { display: none !important; }
+body.sp-freq-ativo #corpo { width: auto !important; float: none !important; }
+
+#spFreqApp {
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    color: #1f2a44;
+}
+
+/* Topo */
+.sp-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+.sp-topo-esq { display: flex; align-items: center; gap: 14px; }
+.sp-titulo { margin: 0; font-size: 26px; font-weight: 700; color: #14213d; line-height: 1.15; }
+.sp-sub { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5d6b86; margin-top: 3px; }
+.sp-sub i { width: 3px; height: 3px; border-radius: 50%; background: #9aa7c0; display: inline-block; }
+.sp-topo-dir { text-align: right; }
+.sp-badge {
+    display: inline-block;
+    background: #dde9fb;
+    color: #14418a;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 999px;
+    letter-spacing: .3px;
+}
+.sp-atualizacao {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #4a5878;
+}
+
+/* Barra de filtros */
+.sp-barra {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 18px;
+    background: #e6eefb;
+    border: 1px solid #cddcf3;
+    border-radius: 10px;
+    padding: 12px 14px;
+}
+.sp-campo { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: #33415f; }
+.sp-campo-turma { min-width: 300px; flex: 0 1 300px; }
+.sp-campo-periodo { min-width: 205px; flex: 0 1 205px; }
+.sp-campo select {
+    height: 36px;
+    padding: 0 10px;
+    background: #fff;
+    border: 1px solid #d5deee;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #1f2a44;
+    width: 100%;
+}
+.sp-seg { display: flex; gap: 4px; }
+.sp-seg button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    background: #fff;
+    border: 1px solid #d5deee;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1d4fa8;
+    cursor: pointer;
+}
+.sp-seg button:hover { background: #f1f6ff; }
+.sp-seg button.ativo { background: #1e6fe8; border-color: #1e6fe8; color: #fff; }
+
+.sp-barra-acoes { margin-left: auto; display: flex; gap: 12px; }
+.sp-barra-acoes button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 22px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.sp-btn-sec { background: #fff; border: 1px solid #1e6fe8; color: #1e6fe8; }
+.sp-btn-sec:hover { background: #eef4ff; }
+.sp-btn-prim { background: #1e6fe8; border: 1px solid #1e6fe8; color: #fff; }
+.sp-btn-prim:hover { background: #1859c0; }
+
+/* Linha de contadores */
+.sp-linha-resumo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 2px;
+    font-size: 13px;
+}
+.sp-chip { padding: 4px 12px; border-radius: 999px; font-weight: 600; }
+.sp-chip-p { background: #d7f0d9; color: #25692f; }
+.sp-chip-f { background: #f8d3d6; color: #8a2b33; }
+.sp-chip-s { background: #e7ebf3; color: #506080; }
+.sp-data { color: #5d6b86; margin-left: 6px; }
+.sp-bulk { margin-left: auto; display: flex; gap: 8px; }
+.sp-bulk button {
+    background: #fff;
+    border: 1px solid #cddcf3;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2c4a7a;
+    cursor: pointer;
+}
+.sp-bulk button:hover { background: #eef4ff; }
+
+/* Cartões — fluxo em duas colunas, como no layout de referência */
+.sp-grid { column-count: 2; column-gap: 24px; }
+.sp-card {
+    break-inside: avoid;
+    background: #fff;
+    border: 1px solid #e0e6f1;
+    border-radius: 10px;
+    padding: 12px 14px 14px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(20, 33, 61, .06);
+}
+.sp-card-cab {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 18px;
+    color: #1b2236;
+    margin-bottom: 10px;
+}
+.sp-nome { cursor: pointer; text-transform: uppercase; }
+.sp-nome:hover { color: #1e6fe8; }
+.sp-acoes { display: grid; gap: 10px; }
+.sp-btn {
+    height: 36px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+    transition: transform .08s ease, box-shadow .12s ease, opacity .12s ease;
+}
+.sp-btn:hover:not(:disabled) { box-shadow: 0 2px 6px rgba(0, 0, 0, .16); }
+.sp-btn:active:not(:disabled) { transform: translateY(1px); }
+.sp-btn:disabled { cursor: not-allowed; opacity: .55; }
+.sp-presente { background: #d9f1db; border-color: #74c47f; color: #2a7a37; }
+.sp-falta { background: #f9d6d9; border-color: #e39aa2; color: #8a2b33; }
+.sp-card:not([data-estado="vazio"]) .sp-btn:not(.ativo) { opacity: .7; }
+.sp-presente.ativo { background: #b4e6ba; border: 2px solid #1f8a35; font-weight: 700; }
+.sp-falta.ativo { background: #f3b0b6; border: 2px solid #a81d2a; font-weight: 700; }
+.sp-just {
+    margin-top: 10px;
+    background: #fff8e1;
+    border: 1px solid #f0d27a;
+    color: #7a5b00;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Resumo da turma */
+.sp-resumo { display: none; }
+body.sp-modo-resumo .sp-resumo {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 12px;
+}
+body.sp-modo-resumo #spGrid { display: none; }
+.sp-tile {
+    background: #fff;
+    border: 1px solid #e0e6f1;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.sp-tile-rot { font-size: 12px; color: #5d6b86; }
+.sp-tile-val { font-size: 22px; color: #14213d; }
+.sp-tile-info .sp-tile-val { font-size: 14px; font-weight: 600; }
+.sp-tile-p .sp-tile-val { color: #25692f; }
+.sp-tile-f .sp-tile-val { color: #a81d2a; }
+
+/* Botões originais Gravar / Remover / Cancelar (rodapé) */
+.sp-rodape-acoes { margin-top: 8px; }
+.sp-rodape-acoes input[type="submit"] {
+    height: 38px;
+    padding: 0 18px;
+    border-radius: 6px;
+    border: 1px solid #1e6fe8;
+    background: #fff;
+    color: #1e6fe8;
+    font-weight: 600;
+    cursor: pointer;
+}
+.sp-rodape-acoes input[type="submit"]:hover { background: #eef4ff; }
+.sp-rodape-acoes input[id$="botaoGravarFreq"] { background: #1e6fe8; color: #fff; }
+.sp-rodape-acoes input[id$="botaoGravarFreq"]:hover { background: #1859c0; }
+
+@media (max-width: 900px) {
+    .sp-grid { column-count: 1; }
+    .sp-barra-acoes { margin-left: 0; }
 }

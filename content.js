@@ -268,109 +268,326 @@ function ajustarTelaInicialTurmas() {
 }
 
 // ============================================================
-// MÓDULO 2: LANÇAMENTO DE FREQUÊNCIA
+// MÓDULO 2: LANÇAMENTO DE FREQUÊNCIA (interface em cartões)
 // ============================================================
+// A tabela original do SIGEduc continua no DOM (escondida por CSS):
+// é ela que o formulário envia ao salvar. Os cartões só leem e
+// alteram os <select class="selectFreq"> de cada linha.
+
+const SP_FREQ = { cards: [], modo: "lancamento", ctx: null };
+
+const SP_ICON_PESSOAS = `<svg viewBox="0 0 64 40" width="50" height="32" aria-hidden="true"><g fill="#1e6fd9"><circle cx="32" cy="9" r="7"/><path d="M20 34c0-8 5-14 12-14s12 6 12 14v3H20z"/><circle cx="12" cy="15" r="5.5"/><path d="M2 35c0-6 4-11 10-11 2 0 4 .6 5.500 1.600C15 28 14 31 14 35v2H2z"/><circle cx="52" cy="15" r="5.500"/><path d="M62 35c0-6-4-11-10-11-2 0-4 .6-5.500 1.600C49 28 50 31 50 35v2h12z"/></g></svg>`;
+const SP_ICON_RELOGIO = `<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#2e9e5b" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="#2e9e5b" stroke-width="2" stroke-linecap="round"/></svg>`;
+const SP_ICON_CAL = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="3.500" y="5" width="17" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.500 10h17M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+const SP_ICON_BARRAS = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 20V10M12 20V4M18 20v-7" stroke="currentColor" stroke-width="3" stroke-linecap="round" fill="none"/></svg>`;
+const SP_ICON_REFRESH = `<svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.300-5.600M20 4v5h-5" stroke="currentColor" stroke-width="2.200" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const SP_ICON_CHECK = `<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.500l4.500 4.500L19 7.500" stroke="currentColor" stroke-width="2.600" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+function el(tag, cls, texto) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (texto !== undefined) e.textContent = texto;
+    return e;
+}
+
+function limparTexto(node) {
+    return node ? node.textContent.replace(/\s+/g, " ").trim() : "";
+}
 
 function getLinhasFrequencia() {
     return document.querySelectorAll("#formFrequencia\\:alunos tbody tr");
 }
 
-function criarApp() {
-    if (document.getElementById("appFrequencia")) return;
-    if (getLinhasFrequencia().length === 0) return;
+function getMaxFaltas() {
+    const campo = document.getElementById("maxFaltas");
+    const n = campo ? parseInt(campo.value, 10) : NaN;
+    return n > 0 ? n : 2;
+}
 
-    const app = document.createElement("div");
-    app.id = "appFrequencia";
+// Lê a tabela "Dados da Turma" e os textos da página para montar o cabeçalho
+function lerContextoFrequencia() {
+    const dados = {};
+    document.querySelectorAll("table.dados_turma_pg tr").forEach(tr => {
+        const t = tr.querySelector(".dados_turma_titulo");
+        const v = tr.querySelector("td.none");
+        if (t && v) dados[limparTexto(t).replace(":", "")] = limparTexto(v);
+    });
 
+    const mTurma = (dados["Turma"] || "").match(/\b([A-Za-z]+\d+[A-Za-z])\b/);
+    const turma = mTurma ? extrairCodigoTurma(mTurma[1]) : "";
+
+    const mAno = limparTexto(document.getElementById("calendarios")).match(/Calend[aá]rio\s+(\d{4})/);
+    const mSem = (dados["Periodicidade"] || "").match(/(\d)/);
+    const periodo = mAno ? mAno[1] + (mSem ? "." + mSem[1] : "") : "";
+
+    const mData = limparTexto(document.querySelector("#frequencia h4")).match(/(\d{2}\/\d{2}\/\d{4})/);
+
+    return {
+        dados,
+        turma,
+        periodo,
+        componente: dados["Componente"] || "",
+        data: mData ? mData[1] : ""
+    };
+}
+
+function formatarAgora() {
+    const d = new Date();
+    const p = n => String(n).padStart(2, "0");
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+function montarApp(conteudo) {
+    const ctx = lerContextoFrequencia();
+    SP_FREQ.ctx = ctx;
+
+    const app = el("div");
+    app.id = "spFreqApp";
     app.innerHTML = `
-        <h3>Frequ\u00EAncia</h3>
-        <button class="btn-presente">Marcar todos presentes</button>
-        <button class="btn-falta">Marcar todos faltas</button>
-        <div id="contador">Carregando...</div>
+        <div class="sp-topo">
+            <div class="sp-topo-esq">
+                <span class="sp-logo">${SP_ICON_PESSOAS}</span>
+                <div>
+                    <h1 class="sp-titulo">Lan\u00E7amento de Frequ\u00EAncia</h1>
+                    <div class="sp-sub">
+                        <span>Portal Docente</span><i></i>
+                        <span id="spSubTurma"></span><i></i>
+                        <span id="spSubPeriodo"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="sp-topo-dir">
+                <span class="sp-badge">SIGEDUC PRO</span>
+                <div class="sp-atualizacao">${SP_ICON_RELOGIO}<span id="spAtualizacao"></span></div>
+            </div>
+        </div>
+
+        <div class="sp-barra">
+            <label class="sp-campo sp-campo-turma"><span>Turma</span><select id="spSelTurma" disabled></select></label>
+            <label class="sp-campo sp-campo-periodo"><span>Ano / Semestre</span><select id="spSelPeriodo" disabled></select></label>
+            <div class="sp-campo">
+                <span>Visualiza\u00E7\u00E3o</span>
+                <div class="sp-seg">
+                    <button type="button" data-modo="lancamento" class="ativo">${SP_ICON_CAL}Lan\u00E7amento de Frequ\u00EAncia</button>
+                    <button type="button" data-modo="resumo">${SP_ICON_BARRAS}Resumo da Turma</button>
+                    <button type="button" data-modo="calendario">${SP_ICON_CAL}Alterar dia</button>
+                </div>
+            </div>
+            <div class="sp-barra-acoes">
+                <button type="button" id="spAtualizar" class="sp-btn-sec">${SP_ICON_REFRESH}Atualizar</button>
+                <button type="button" id="spSalvar" class="sp-btn-prim">${SP_ICON_CHECK}Salvar Frequ\u00EAncia</button>
+            </div>
+        </div>
+
+        <div class="sp-linha-resumo">
+            <span class="sp-chip sp-chip-p">\u2714 <b id="spQtdP">0</b> presentes</span>
+            <span class="sp-chip sp-chip-f">\u2716 <b id="spQtdF">0</b> com falta</span>
+            <span class="sp-chip sp-chip-s" id="spChipS">\u25CB <b id="spQtdS">0</b> sem marca\u00E7\u00E3o</span>
+            <span class="sp-data" id="spData"></span>
+            <div class="sp-bulk">
+                <button type="button" id="spTodosP">Todos presentes (P)</button>
+                <button type="button" id="spTodosF">Todos com falta (F)</button>
+            </div>
+        </div>
+
+        <div id="spResumo" class="sp-resumo"></div>
+        <div id="spGrid" class="sp-grid"></div>
     `;
+    conteudo.insertBefore(app, conteudo.firstChild);
 
-    document.body.appendChild(app);
+    // Textos dinâmicos (via textContent)
+    document.getElementById("spSubTurma").textContent = ctx.turma ? "Turma " + ctx.turma : "Turma";
+    document.getElementById("spSubPeriodo").textContent = ctx.periodo;
+    document.getElementById("spAtualizacao").textContent = "\u00DAltima atualiza\u00E7\u00E3o: " + formatarAgora();
+    document.getElementById("spData").textContent = ctx.data ? "Aula de " + ctx.data : "";
 
-    app.querySelector(".btn-presente").onclick = marcarTodosPresentes;
-    app.querySelector(".btn-falta").onclick = marcarTodosFaltas;
+    const optTurma = el("option", "", (ctx.turma ? ctx.turma + " - " : "") + (ctx.componente || "Turma atual"));
+    document.getElementById("spSelTurma").appendChild(optTurma);
+    document.getElementById("spSelPeriodo").appendChild(el("option", "", ctx.periodo || "\u2014"));
+
+    // Visualização
+    app.querySelectorAll(".sp-seg button").forEach(btn => {
+        btn.addEventListener("click", () => definirModo(btn.dataset.modo));
+    });
+
+    document.getElementById("spAtualizar").addEventListener("click", () => window.location.reload());
+    document.getElementById("spSalvar").addEventListener("click", () => {
+        const gravar = document.getElementById("formFrequencia:botaoGravarFreq");
+        if (gravar) gravar.click();
+    });
+    document.getElementById("spTodosP").addEventListener("click", marcarTodosPresentes);
+    document.getElementById("spTodosF").addEventListener("click", marcarTodosFaltas);
+
+    // Botões originais (Gravar / Remover / Cancelar) ganham estilo próprio
+    const gravarOrig = document.getElementById("formFrequencia:botaoGravarFreq");
+    if (gravarOrig && gravarOrig.parentElement) gravarOrig.parentElement.classList.add("sp-rodape-acoes");
+
+    definirModo(SP_FREQ.modo);
+}
+
+function definirModo(modo) {
+    SP_FREQ.modo = modo;
+    document.body.classList.toggle("sp-modo-calendario", modo === "calendario");
+    document.body.classList.toggle("sp-modo-resumo", modo === "resumo");
+    document.querySelectorAll("#spFreqApp .sp-seg button").forEach(b => {
+        b.classList.toggle("ativo", b.dataset.modo === modo);
+    });
+    atualizarCards();
+}
+
+function montarGrid() {
+    const grid = document.getElementById("spGrid");
+    if (!grid) return;
+    grid.replaceChildren();
+    SP_FREQ.cards = [];
+    const max = getMaxFaltas();
+
+    getLinhasFrequencia().forEach(linha => {
+        const tds = linha.querySelectorAll(":scope > td");
+        const sel = linha.querySelector("select.selectFreq");
+        if (!sel || tds.length < 3) return;
+
+        const card = el("div", "sp-card");
+
+        const cab = el("div", "sp-card-cab");
+        const num = el("span", "sp-num", limparTexto(tds[0]) + ".");
+        const mat = el("span", "sp-mat", limparTexto(tds[1]));
+        const nome = el("span", "sp-nome", limparTexto(tds[2]));
+        nome.title = "Clique para alternar presen\u00E7a/falta";
+        cab.append(num, mat, nome);
+
+        const acoes = el("div", "sp-acoes");
+        const botoes = [];
+        for (let v = 0; v <= max; v++) {
+            const b = el("button", v === 0 ? "sp-btn sp-presente" : "sp-btn sp-falta", v === 0 ? "PRESENTE" : `${v} FALTA`);
+            b.type = "button";
+            b.dataset.valor = String(v);
+            b.addEventListener("click", () => definirFrequencia(linha, v));
+            botoes.push(b);
+            acoes.appendChild(b);
+        }
+        acoes.style.gridTemplateColumns = `repeat(${max + 1}, 1fr)`;
+
+        card.append(cab, acoes);
+
+        // Justificativa (Bolsa Família) — reaproveita o link original da linha
+        let btnJust = null;
+        const linkJust = linha.querySelector(".justificativa a");
+        if (linkJust) {
+            btnJust = el("button", "sp-just", "Justificar falta (B. Fam\u00EDlia)");
+            btnJust.type = "button";
+            btnJust.addEventListener("click", () => linkJust.click());
+            card.appendChild(btnJust);
+        }
+
+        nome.addEventListener("click", () => {
+            definirFrequencia(linha, sel.value === "0" ? max : 0);
+        });
+
+        grid.appendChild(card);
+        SP_FREQ.cards.push({ linha, sel, card, botoes, btnJust });
+    });
+}
+
+function definirFrequencia(linha, valor) {
+    const sel = linha.querySelector("select.selectFreq");
+    if (!sel || sel.disabled) return;
+    if (![...sel.options].some(o => o.value === String(valor))) return;
+    sel.value = String(valor);
+    // O onchange inline do SIGEduc (showHideJustificativa) roda normalmente
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+    atualizarCards();
 }
 
 function marcarTodosPresentes() {
-    getLinhasFrequencia().forEach(linha => {
-        const btn = linha.querySelector("img[alt='Presente']");
-        if (btn) btn.click();
-        pintar(linha, true);
-    });
-    atualizarContador();
+    getLinhasFrequencia().forEach(l => definirFrequencia(l, 0));
 }
 
 function marcarTodosFaltas() {
-    getLinhasFrequencia().forEach(linha => {
-        const btn = linha.querySelector("img[alt='Ausente']");
-        if (btn) btn.click();
-        pintar(linha, false);
+    const max = getMaxFaltas();
+    getLinhasFrequencia().forEach(l => definirFrequencia(l, max));
+}
+
+// Sincroniza os cartões com o valor real dos selects
+function atualizarCards() {
+    const lista = SP_FREQ.cards;
+    if (!lista.length) return;
+
+    let p = 0, f = 0, s = 0;
+    lista.forEach(({ sel, card, botoes, btnJust }) => {
+        const v = sel.value;
+        const estado = v === "0" ? "presente" : (parseInt(v, 10) > 0 ? "falta" : "vazio");
+        if (estado === "presente") p++; else if (estado === "falta") f++; else s++;
+        card.dataset.estado = estado;
+        card.classList.toggle("sp-desabilitado", !!sel.disabled);
+        botoes.forEach(b => {
+            b.classList.toggle("ativo", b.dataset.valor === v);
+            b.disabled = !!sel.disabled;
+        });
+        if (btnJust) btnJust.style.display = estado === "falta" ? "" : "none";
     });
-    atualizarContador();
+
+    const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+    set("spQtdP", p);
+    set("spQtdF", f);
+    set("spQtdS", s);
+    const chipS = document.getElementById("spChipS");
+    if (chipS) chipS.style.display = s > 0 ? "" : "none";
+
+    if (SP_FREQ.modo === "resumo") renderResumo(p, f, s, lista.length);
 }
 
-function pintar(linha, presente) {
-    linha.style.backgroundColor = presente ? "#d4edda" : "#f8d7da";
-}
-
-function cliqueLinha() {
-    getLinhasFrequencia().forEach(linha => {
-        const nome = linha.querySelector("td:nth-child(3)");
-        if (!nome || nome.dataset.ativo) return;
-
-        nome.dataset.ativo = "true";
-        nome.style.cursor = "pointer";
-
-        nome.onclick = () => {
-            const btnPresenca = linha.querySelector("img[alt='Presente']");
-            const btnFalta = linha.querySelector("img[alt='Ausente']");
-            const isPresente = linha.style.backgroundColor === "rgb(212, 237, 218)";
-
-            if (isPresente) {
-                if (btnFalta) btnFalta.click();
-                pintar(linha, false);
-            } else {
-                if (btnPresenca) btnPresenca.click();
-                pintar(linha, true);
-            }
-            atualizarContador();
-        };
+function renderResumo(p, f, s, total) {
+    const box = document.getElementById("spResumo");
+    if (!box) return;
+    box.replaceChildren();
+    const tile = (rotulo, valor, cls) => {
+        const t = el("div", "sp-tile" + (cls ? " " + cls : ""));
+        t.append(el("span", "sp-tile-rot", rotulo), el("strong", "sp-tile-val", String(valor)));
+        box.appendChild(t);
+    };
+    tile("Estudantes", total);
+    tile("Presentes", p, "sp-tile-p");
+    tile("Com falta", f, "sp-tile-f");
+    tile("Sem marca\u00E7\u00E3o", s);
+    const dados = (SP_FREQ.ctx && SP_FREQ.ctx.dados) || {};
+    Object.keys(dados).forEach(k => {
+        if (k === "Turma") return;
+        tile(k, dados[k], "sp-tile-info");
     });
 }
 
+function criarInterfaceFrequencia() {
+    if (!document.getElementById("formFrequencia:alunos")) return;
+    const linhas = getLinhasFrequencia();
+    if (linhas.length === 0) return;
+
+    document.body.classList.add("sp-freq-ativo");
+    const conteudo = document.getElementById("conteudo") || document.body;
+
+    if (!document.getElementById("spFreqApp")) montarApp(conteudo);
+
+    const c = SP_FREQ.cards;
+    if (!c.length || !c[0].linha.isConnected || c.length !== linhas.length) montarGrid();
+}
+
+// Só pré-marca "Presente" quando o aluno ainda está sem seleção ("Selecione"),
+// para nunca sobrescrever uma frequência já lançada.
 function marcarInicial() {
     getLinhasFrequencia().forEach(linha => {
-        if (!linha.dataset.init) {
-            linha.dataset.init = "true";
-            const btn = linha.querySelector("img[alt='Presente']");
-            if (btn) {
-                btn.click();
-                pintar(linha, true);
-            }
-        }
+        if (linha.dataset.init) return;
+        linha.dataset.init = "true";
+        const sel = linha.querySelector("select.selectFreq");
+        if (sel && sel.value === "-1") definirFrequencia(linha, 0);
     });
 }
 
-function atualizarContador() {
-    let p = 0, f = 0;
-    getLinhasFrequencia().forEach(linha => {
-        const bg = linha.style.backgroundColor;
-        if (bg === "rgb(212, 237, 218)") p++;
-        else if (bg === "rgb(248, 215, 218)") f++;
-    });
-    const contador = document.getElementById("contador");
-    if (contador) {
-        contador.innerHTML = `\u2714 ${p} | \u274C ${f}`;
-    }
-}
-
-// Atalhos de teclado
+// Atalhos de teclado: P = todos presentes, F = todos com falta
 document.addEventListener("keydown", (e) => {
-    if (["input", "textarea"].includes(document.activeElement.tagName.toLowerCase())) return;
+    if (!document.body.classList.contains("sp-freq-ativo")) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
+    if (["input", "textarea", "select"].includes(tag)) return;
     if (e.key.toLowerCase() === "p") marcarTodosPresentes();
     if (e.key.toLowerCase() === "f") marcarTodosFaltas();
 });
@@ -386,10 +603,9 @@ function mainLoop() {
     ajustarTelaInicialTurmas();
 
     // Tela de Chamada / Frequência
-    criarApp();
+    criarInterfaceFrequencia();
     marcarInicial();
-    cliqueLinha();
-    atualizarContador();
+    atualizarCards();
 }
 
 setInterval(mainLoop, 1000);
